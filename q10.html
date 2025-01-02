@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Blog Products</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+
+        .blog-post {
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .post-image {
+            width: 100%;
+            height: 300px;
+            background-color: #4a90e2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 10px;
+        }
+
+        .product-image {
+            background-color: #4a90e2;
+            color: white;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .product-image:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .modal {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: modalAppear 0.3s ease-out;
+            margin: 40px auto;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        /* 為 modal 添加自訂捲軸樣式 */
+        .modal::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .modal::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .modal::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .close-button,
+        .back-button {
+            position: absolute;
+            top: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .close-button {
+            right: 20px;
+        }
+
+        .back-button {
+            left: 20px;
+        }
+
+        .close-button:hover,
+        .back-button:hover {
+            background-color: #f0f0f0;
+            transform: scale(1.1);
+        }
+
+        .product-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .modal-product-image {
+            width: 100%;
+            height: 300px;
+            background-color: #4a90e2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-product-image.small {
+            height: 150px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-product-image.small {
+                height: 120px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .modal-product-image.small {
+                height: 100px;
+            }
+        }
+
+        .seen-in-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+
+        .seen-in-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .description {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        .seen-in-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        /* 調整 Seen-In Modal 中的內容間距 */
+        .modal>.product-container:first-child {
+            margin-top: 0;
+        }
+
+        /* RWD 斷點 */
+        @media (max-width: 1200px) {
+            .blog-post {
+                max-width: 900px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .blog-post {
+                max-width: 700px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .post-image {
+                height: 250px;
+            }
+
+            .modal-product-image {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .blog-post {
+                padding: 15px;
+            }
+
+            .product-grid {
+                gap: 15px;
+            }
+
+            .product-image {
+                height: 150px;
+            }
+
+            .modal {
+                padding: 20px;
+            }
+
+            .seen-in-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .description {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .seen-in-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .post-image {
+                height: 200px;
+            }
+
+            .modal-product-image {
+                height: 200px;
+            }
+
+            .modal {
+                padding: 15px;
+                width: 95%;
+            }
+
+            .close-button,
+            .back-button {
+                width: 35px;
+                height: 35px;
+                top: 10px;
+            }
+
+            .close-button {
+                right: 10px;
+            }
+
+            .back-button {
+                left: 10px;
+            }
+
+            .seen-in-button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="blog-post">
+            <div class="post-image">Post Image1</div>
+            <div class="product-grid">
+                <div
+                    class="product-image"
+                    v-for="product in products"
+                    :key="product.id"
+                    @click="openItemDetails(product)"
+                >
+                    {{ product.name }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Details Modal -->
+        <div
+            v-if="showItemDetails"
+            class="modal-overlay"
+            @click.self="closeItemDetails"
+        >
+            <div class="modal">
+                <button
+                    class="close-button"
+                    @click="closeItemDetails"
+                >×</button>
+                <div class="product-container">
+                    <div class="modal-product-image">{{ selectedProduct.name }}</div>
+                    <button
+                        class="seen-in-button"
+                        @click="openSeenIn"
+                    >Seen In</button>
+                </div>
+                <div class="description">
+                    <p><b>{{ selectedProduct.name }}</b></p>
+                    Some text description<br>
+                    Some text description<br>
+                    Some text description
+                </div>
+            </div>
+        </div>
+
+        <!-- Seen-In Modal -->
+        <div
+            v-if="showSeenIn"
+            class="modal-overlay"
+            @click.self="closeAll"
+        >
+            <div class="modal">
+                <button
+                    class="back-button"
+                    @click="backToItemDetails"
+                >←</button>
+                <button
+                    class="close-button"
+                    @click="closeAll"
+                >×</button>
+                <div class="product-container">
+                    <div class="modal-product-image small">{{ selectedProduct.name }}</div>
+                </div>
+                <div
+                    class="product-container"
+                    style="margin-top: 20px;"
+                >
+                    <div class="modal-product-image">Post Image2</div>
+                </div>
+                <div class="seen-in-grid">
+                    <div
+                        class="product-image"
+                        v-for="product in filteredSeenInProducts"
+                        :key="product.id"
+                        @click="openItemDetails(product)"
+                    >
+                        {{ product.name }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data () {
+                return {
+                    showItemDetails: false,
+                    showSeenIn: false,
+                    selectedProduct: null,
+                    products: [
+                        { id: 1, name: 'Product Image1' },
+                        { id: 2, name: 'Product Image2' },
+                        { id: 3, name: 'Product Image3' }
+                    ],
+                    seenInProducts: [
+                        { id: 1, name: 'Product Image1' },
+                        { id: 2, name: 'Product Image2' },
+                        { id: 3, name: 'Product Image3' },
+                        { id: 4, name: 'Product Image4' },
+                        { id: 5, name: 'Product Image5' }
+                    ]
+                }
+            },
+            computed: {
+                filteredSeenInProducts () {
+                    return this.seenInProducts.filter(product =>
+                        product.id !== (this.selectedProduct ? this.selectedProduct.id : null)
+                    );
+                }
+            },
+            methods: {
+                openItemDetails (product) {
+                    this.selectedProduct = product;
+                    this.showItemDetails = true;
+                    this.showSeenIn = false;
+                },
+                closeItemDetails () {
+                    this.showItemDetails = false;
+                    this.selectedProduct = null;
+                },
+                openSeenIn () {
+                    this.showSeenIn = true;
+                    this.showItemDetails = false;
+                },
+                backToItemDetails () {
+                    this.showSeenIn = false;
+                    this.showItemDetails = true;
+                },
+                closeAll () {
+                    this.showSeenIn = false;
+                    this.showItemDetails = false;
+                    this.selectedProduct = null;
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
